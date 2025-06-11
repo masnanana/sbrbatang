@@ -2,34 +2,47 @@ import streamlit as st
 import geopandas as gpd
 from shapely.geometry import Point
 
-@st.cache_data
-def load_geojson()
-    return gpd.read_file(data.geojson).to_crs(epsg=4326)
+# Judul aplikasi
+st.title("🗺️ Cek Koordinat dalam Wilayah SBR")
 
-gdf = load_geojson()
+# Ambil GeoJSON dari GitHub
+url = "https://raw.githubusercontent.com/masnanana/koordinat-sbr-3375/main/data.geojson"
 
-st.title(🔍 Cek Lokasi Berdasarkan Koordinat)
-st.write(Masukkan koordinat dari Google Maps (format `lat, lon`))
+# Coba baca data GeoJSON
+try:
+    gdf = gpd.read_file(url)
 
-koordinat = st.text_input(Contoh `-6.88, 109.68`)
+    # Pastikan dalam EPSG:4326
+    if gdf.crs is None or gdf.crs.to_string() != "EPSG:4326":
+        gdf = gdf.to_crs(epsg=4326)
+except Exception as e:
+    st.error(f"❌ Gagal memuat GeoJSON: {e}")
+    st.stop()
 
-if koordinat
-    try
-        lat_str, lon_str = koordinat.split(,)
-        lat = float(lat_str.strip())
-        lon = float(lon_str.strip())
-        titik = Point(lon, lat)
+# Input koordinat dari pengguna
+koordinat_input = st.text_input("📍 Masukkan koordinat dari Google Maps (format: lat, lon)", "")
 
-        hasil = gdf[gdf.contains(titik)]
+if st.button("🔍 Cek Lokasi"):
+    if koordinat_input.strip() == "":
+        st.warning("⚠️ Silakan masukkan koordinat terlebih dahulu.")
+    else:
+        try:
+            lat_str, lon_str = koordinat_input.split(",")
+            lat = float(lat_str.strip())
+            lon = float(lon_str.strip())
+            titik = Point(lon, lat)
 
-        if not hasil.empty
-            row = hasil.iloc[0]
-            st.success(✅ Lokasi ditemukan)
-            st.write(fKabupaten {row['nmkab']})
-            st.write(fKecamatan {row['nmkec']})
-            st.write(fDesa {row['nmdesa']})
-            st.write(fSLS {row['nmsls']})
-        else
-            st.warning(❌ Titik tidak ada dalam batas wilayah.)
-    except
-        st.error(❌ Format salah. Gunakan format `-6.88, 109.68`)
+            # Cek apakah titik berada dalam poligon
+            hasil = gdf[gdf.contains(titik)]
+
+            if not hasil.empty:
+                row = hasil.iloc[0]
+                st.success("✅ Titik berada di wilayah:")
+                st.markdown(f"- **Kabupaten**: {row.get('nmkab', '-')}")
+                st.markdown(f"- **Kecamatan**: {row.get('nmkec', '-')}")
+                st.markdown(f"- **Kelurahan**: {row.get('nmdesa', '-')}")
+                st.markdown(f"- **SLS**: {row.get('nmsls', '-')}")
+            else:
+                st.error("❌ Titik tidak berada dalam batas wilayah manapun.")
+        except:
+            st.error("❌ Format salah. Gunakan format: -6.88, 109.68")
