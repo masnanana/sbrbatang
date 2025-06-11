@@ -3,10 +3,10 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 # Judul aplikasi
-st.title("🗺️ Cek Koordinat dalam Wilayah SBR")
+st.title("Cek Koordinat dalam Wilayah Batang")
 
 # Ambil GeoJSON dari GitHub
-url = "https://raw.githubusercontent.com/masnanana/koordinat-sbr-3375/main/data.geojson"
+url = "https://raw.githubusercontent.com/masnanana/sbrbatang/main/data.geojson"
 
 # Coba baca data GeoJSON
 try:
